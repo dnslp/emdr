@@ -1,39 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>EMDR Experience</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <div class="container">
-    <h1>EMDR Experience</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EMDR Experience</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Full-width visual container -->
     <div id="visualContainer">
       <div class="oscillate" id="visualElement">😊</div>
     </div>
-    <div id="settings">
-      <div class="setting-item">
-        <label for="frequency">Beep Frequency (Hz):</label>
-        <input type="range" id="frequency" min="200" max="1000" value="440" />
-        <span id="freqValue">440 Hz</span>
+
+    <!-- Settings and controls -->
+    <div class="container">
+      <h1>EMDR Experience</h1>
+      <div id="settings">
+        <div class="setting-item">
+          <label for="frequency">Beep Frequency (Hz):</label>
+          <input
+            type="range"
+            id="frequency"
+            min="40"
+            max="1000"
+            value="440"
+          />
+          <span id="freqValue">440 Hz</span>
+        </div>
+        <div class="setting-item">
+          <label for="oscillationSpeed">Oscillation Speed (Full Cycle in s):</label>
+          <input
+            type="range"
+            id="oscillationSpeed"
+            min="1"
+            max="5"
+            step="0.1"
+            value="2"
+          />
+          <span id="speedValue">2 s</span>
+        </div>
+        <div class="setting-item">
+          <label for="visualSelect">Visual Mode:</label>
+          <select id="visualSelect">
+            <option value="emoji">Emoji</option>
+            <option value="shape">Shape</option>
+            <option value="picture">Picture</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <label for="customEmoji">Custom Emoji (for Emoji mode):</label>
+          <input type="text" id="customEmoji" placeholder="Type an emoji" value="😊" />
+        </div>
+        <div class="setting-item">
+          <label for="emojiSize">Emoji Size (px):</label>
+          <input type="range" id="emojiSize" min="20" max="200" value="100" />
+          <span id="emojiSizeValue">100 px</span>
+        </div>
+        <div class="setting-item">
+          <label for="bgColor">Visual Background Color:</label>
+          <input type="color" id="bgColor" value="#f5f5f5" />
+        </div>
+        <button id="toggleButton">Start Oscillation</button>
       </div>
-      <div class="setting-item">
-        <label for="visualSelect">Visual Mode:</label>
-        <select id="visualSelect">
-          <option value="emoji">Emoji</option>
-          <option value="shape">Shape</option>
-          <option value="picture">Picture</option>
-        </select>
-      </div>
-      <div class="setting-item">
-        <label for="oscillationSpeed">Oscillation Speed (s):</label>
-        <input type="range" id="oscillationSpeed" min="1" max="5" value="2" />
-        <span id="speedValue">2 s</span>
-      </div>
-      <button id="playButton">Play Beep</button>
     </div>
-  </div>
-  <script src="script.js"></script>
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>
