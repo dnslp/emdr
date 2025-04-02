@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
       visualElement.style.borderRadius = "50%";
     } else if (visualMode.value === "picture") {
       visualElement.innerHTML =
-        '<img src="https://via.placeholder.com/100" alt="oscillating image" />';
+        '<img src="https://www.bluey.tv/wp-content/uploads/2023/07/Bluey.png" alt="oscillating image" />';
     }
   }
   visualMode.addEventListener("change", updateVisual);
