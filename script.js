@@ -7,16 +7,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const freqValueDisplay = document.getElementById("freqValue");
   const oscillationSpeedSlider = document.getElementById("oscillationSpeed");
   const speedValueDisplay = document.getElementById("speedValue");
+  const oscillationCurveSelect = document.getElementById("oscillationCurve");
   const visualSelect = document.getElementById("visualSelect");
   const customEmojiInput = document.getElementById("customEmoji");
   const emojiSizeSlider = document.getElementById("emojiSize");
   const emojiSizeValueDisplay = document.getElementById("emojiSizeValue");
-  const bgColorInput = document.getElementById("bgColor");
+  const sessionDurationInput = document.getElementById("sessionDuration");
+  const timerDisplay = document.getElementById("timerDisplay");
+  const enableGradient = document.getElementById("enableGradient");
+  const gradientInputs = document.querySelector(".gradient-inputs");
+  const leftBgColor = document.getElementById("leftBgColor");
+  const rightBgColor = document.getElementById("rightBgColor");
   const toggleButton = document.getElementById("toggleButton");
+  const fullscreenButton = document.getElementById("fullscreenButton");
   const visualElement = document.getElementById("visualElement");
   const visualContainer = document.getElementById("visualContainer");
 
-  // Update displays on input
+  // Display updates for inputs
   frequencySlider.addEventListener("input", () => {
     freqValueDisplay.textContent = frequencySlider.value + " Hz";
   });
@@ -29,18 +36,22 @@ document.addEventListener("DOMContentLoaded", () => {
       visualElement.style.fontSize = emojiSizeSlider.value + "px";
     }
   });
-  bgColorInput.addEventListener("input", () => {
-    visualContainer.style.backgroundColor = bgColorInput.value;
-  });
   customEmojiInput.addEventListener("input", () => {
     if (visualSelect.value === "emoji") {
       visualElement.textContent = customEmojiInput.value;
     }
   });
+  // Toggle display of gradient color inputs when enabled
+  enableGradient.addEventListener("change", () => {
+    gradientInputs.style.display = enableGradient.checked ? "flex" : "none";
+    if (!enableGradient.checked) {
+      // Reset to a default background when gradient is off
+      visualContainer.style.background = "";
+    }
+  });
 
-  // Update visual element based on visual mode
+  // Update visual element based on mode
   function updateVisual(mode) {
-    // Reset any previous styles and content
     visualElement.style.backgroundColor = "transparent";
     visualElement.style.borderRadius = "0";
     visualElement.innerHTML = "";
@@ -51,16 +62,13 @@ document.addEventListener("DOMContentLoaded", () => {
       visualElement.style.backgroundColor = "#000";
       visualElement.style.borderRadius = "50%";
     } else if (mode === "picture") {
-      // Replace the src URL with your image if desired
       visualElement.innerHTML =
         '<img src="https://via.placeholder.com/100" alt="oscillating image" />';
     }
   }
-  // When visual mode changes
   visualSelect.addEventListener("change", () => {
     updateVisual(visualSelect.value);
   });
-  // Initial visual mode setup
   updateVisual(visualSelect.value);
 
   // Audio beep function
@@ -82,33 +90,55 @@ document.addEventListener("DOMContentLoaded", () => {
   let leftBeepTriggered = false;
   let rightBeepTriggered = false;
 
+  // Session timer variables
+  let sessionIntervalId = null;
+  let sessionEndTime = null;
+
   // Animation loop using requestAnimationFrame
   function animate(timestamp) {
     if (!startTime) startTime = timestamp;
     const elapsed = timestamp - startTime;
-    const cycleDuration = parseFloat(oscillationSpeedSlider.value) * 1000; // full cycle in ms
+    const cycleDuration =
+      parseFloat(oscillationSpeedSlider.value) * 1000; // full cycle in ms
     const halfCycle = cycleDuration / 2;
     const t = elapsed % cycleDuration;
 
-    // Calculate maximum x position (container width minus element width)
+    // Calculate max position (container width minus element width)
     const containerWidth = visualContainer.clientWidth;
     const elementWidth = visualElement.clientWidth;
     const maxX = containerWidth - elementWidth;
-    let position;
-    if (t < halfCycle) {
-      // Moving from left (0) to right (maxX)
-      position = (t / halfCycle) * maxX;
-    } else {
-      // Moving from right (maxX) to left (0)
-      position = maxX - ((t - halfCycle) / halfCycle) * maxX;
+    let position = 0;
+
+    // Oscillation based on selected curve
+    if (oscillationCurveSelect.value === "linear") {
+      if (t < halfCycle) {
+        // Moving from left to right
+        position = (t / halfCycle) * maxX;
+      } else {
+        // Moving from right to left
+        position = maxX - ((t - halfCycle) / halfCycle) * maxX;
+      }
+    } else if (oscillationCurveSelect.value === "sinusoidal") {
+      // Sinusoidal oscillation: phase shift to start at left edge.
+      position =
+        ((Math.sin(2 * Math.PI * (t / cycleDuration - 0.25)) + 1) / 2) * maxX;
     }
     visualElement.style.left = position + "px";
 
-    // Threshold (ms) to detect endpoints
+    // Update background gradient if enabled
+    if (enableGradient.checked) {
+      // Calculate element's center ratio relative to container width
+      const centerX = position + elementWidth / 2;
+      const ratio = centerX / containerWidth;
+      visualContainer.style.background = `linear-gradient(90deg, ${leftBgColor.value} ${ratio *
+        100}%, ${rightBgColor.value} ${ratio * 100}%)`;
+    }
+
+    // Threshold (ms) for endpoint detection
     const threshold = 30;
 
-    // Left endpoint (at t near 0 or near cycleDuration)
-    if (t < threshold || (cycleDuration - t) < threshold) {
+    // Left endpoint: near t=0 or near cycleDuration
+    if (t < threshold || cycleDuration - t < threshold) {
       if (!leftBeepTriggered) {
         playBeep(parseInt(frequencySlider.value, 10), 100);
         leftBeepTriggered = true;
@@ -116,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       leftBeepTriggered = false;
     }
-    // Right endpoint (when t is near halfCycle)
+    // Right endpoint: near halfCycle
     if (Math.abs(t - halfCycle) < threshold) {
       if (!rightBeepTriggered) {
         playBeep(parseInt(frequencySlider.value, 10), 100);
@@ -131,22 +161,45 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Update session timer display
+  function updateTimer() {
+    const remaining = sessionEndTime - Date.now();
+    if (remaining <= 0) {
+      timerDisplay.textContent = "Session Complete";
+      stopOscillation();
+      clearInterval(sessionIntervalId);
+    } else {
+      const minutes = Math.floor(remaining / 60000);
+      const seconds = Math.floor((remaining % 60000) / 1000);
+      timerDisplay.textContent = `${minutes}:${
+        seconds < 10 ? "0" : ""
+      }${seconds}`;
+    }
+  }
+
+  // Start oscillation and session timer
   function startOscillation() {
     if (!isAnimating) {
       isAnimating = true;
       startTime = null;
-      toggleButton.textContent = "Stop Oscillation";
+      toggleButton.textContent = "Stop Session";
+      // Set up session timer based on user input (in minutes)
+      const sessionDuration = parseFloat(sessionDurationInput.value);
+      sessionEndTime = Date.now() + sessionDuration * 60 * 1000;
+      timerDisplay.textContent = "";
+      sessionIntervalId = setInterval(updateTimer, 1000);
       animationFrameId = requestAnimationFrame(animate);
     }
   }
 
   function stopOscillation() {
     isAnimating = false;
-    toggleButton.textContent = "Start Oscillation";
+    toggleButton.textContent = "Start Session";
     cancelAnimationFrame(animationFrameId);
+    clearInterval(sessionIntervalId);
   }
 
-  // Toggle animation when button is clicked
+  // Toggle session start/stop
   toggleButton.addEventListener("click", () => {
     if (isAnimating) {
       stopOscillation();
@@ -155,6 +208,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Update the visual background color on load
-  visualContainer.style.backgroundColor = bgColorInput.value;
+  // Fullscreen toggle for visual container
+  fullscreenButton.addEventListener("click", () => {
+    if (!document.fullscreenElement) {
+      visualContainer.requestFullscreen().catch((err) => {
+        console.error(
+          `Error attempting to enable fullscreen mode: ${err.message} (${err.name})`
+        );
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  });
 });
