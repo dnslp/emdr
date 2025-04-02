@@ -7,12 +7,13 @@
 
 /* Body styling with an Apple-inspired, clean look */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
   background-color: #eaeaea;
   color: #333;
 }
 
-/* Visual container spans full width and has a fixed height */
+/* Visual container spans full width and fixed height */
 #visualContainer {
   width: 100%;
   height: 200px;
@@ -26,7 +27,6 @@ body {
   top: 50%;
   left: 0;
   transform: translateY(-50%);
-  /* Default size for non-emoji modes */
   width: 100px;
   height: 100px;
   display: flex;
@@ -61,7 +61,7 @@ h1 {
   align-items: center;
 }
 
-label {
+.setting-item label {
   margin-bottom: 0.5rem;
   font-weight: bold;
 }
@@ -69,7 +69,8 @@ label {
 input[type="range"],
 select,
 input[type="color"],
-input[type="text"] {
+input[type="text"],
+input[type="number"] {
   width: 100%;
   padding: 0.5rem;
   border-radius: 4px;
@@ -84,8 +85,15 @@ button {
   font-size: 1rem;
   border-radius: 8px;
   cursor: pointer;
+  margin: 0.5rem;
 }
 
 button:hover {
   background-color: #005bb5;
+}
+
+/* Gradient input fields arranged vertically */
+.gradient-inputs {
+  flex-direction: column;
+  gap: 0.5rem;
 }
