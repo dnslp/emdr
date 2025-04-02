@@ -1,15 +1,15 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // Audio context for beeps
+  // Create an AudioContext for generating beeps
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-  // Grab common UI elements
+  // Grab elements
   const visualContainer = document.getElementById("visualContainer");
   const visualElement = document.getElementById("visualElement");
   const toggleButton = document.getElementById("toggleButton");
   const fullscreenButton = document.getElementById("fullscreenButton");
   const timerDisplay = document.getElementById("timerDisplay");
 
-  // Visual tab controls
+  // Visual controls
   const enableVisual = document.getElementById("enableVisual");
   const visualMode = document.getElementById("visualMode");
   const customEmoji = document.getElementById("customEmoji");
@@ -23,37 +23,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const leftBgColor = document.getElementById("leftBgColor");
   const rightBgColor = document.getElementById("rightBgColor");
 
-  // Auditory tab controls
+  // Auditory controls
   const enableAuditory = document.getElementById("enableAuditory");
   const frequencySlider = document.getElementById("frequency");
   const freqValueDisplay = document.getElementById("freqValue");
 
-  // Tactile tab controls
-  const enableVibration = document.getElementById("enableVibration");
-  const vibrationDuration = document.getElementById("vibrationDuration");
-  const vibrationDurationValue = document.getElementById("vibrationDurationValue");
-
   // Session duration control
   const sessionDurationInput = document.getElementById("sessionDuration");
 
-  // Tab switching
+  // Tab switching logic
   const tabs = document.querySelectorAll(".tab");
   const tabPanels = document.querySelectorAll(".tab-panel");
 
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {
-      // Remove active from all tabs and panels
       tabs.forEach((t) => t.classList.remove("active"));
       tabPanels.forEach((panel) => panel.classList.remove("active"));
-
-      // Activate current tab and corresponding panel
       tab.classList.add("active");
       const panel = document.getElementById("tab-" + tab.dataset.tab);
       if (panel) panel.classList.add("active");
     });
   });
 
-  // Update displays for sliders
+  // Update slider displays
   emojiSize.addEventListener("input", () => {
     emojiSizeValue.textContent = emojiSize.value + " px";
     if (visualMode.value === "emoji") {
@@ -66,9 +58,6 @@ document.addEventListener("DOMContentLoaded", () => {
   frequencySlider.addEventListener("input", () => {
     freqValueDisplay.textContent = frequencySlider.value + " Hz";
   });
-  vibrationDuration.addEventListener("input", () => {
-    vibrationDurationValue.textContent = vibrationDuration.value + " ms";
-  });
   enableGradient.addEventListener("change", () => {
     gradientInputs.style.display = enableGradient.checked ? "flex" : "none";
     if (!enableGradient.checked) {
@@ -76,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Update visual element based on visual mode
+  // Update the visual element based on the chosen mode
   function updateVisual() {
     visualElement.style.backgroundColor = "transparent";
     visualElement.style.borderRadius = "0";
@@ -96,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
   customEmoji.addEventListener("input", updateVisual);
   updateVisual();
 
-  // Animation and session control variables
+  // Animation and session variables
   let isAnimating = false;
   let animationFrameId;
   let startTime = null;
@@ -118,50 +107,37 @@ document.addEventListener("DOMContentLoaded", () => {
     const maxX = containerWidth - elementWidth;
     let position = 0;
 
-    // Compute position based on selected curve
+    // Compute the current position using the selected oscillation curve
     if (oscillationCurve.value === "linear") {
-      if (t < halfCycle) {
-        position = (t / halfCycle) * maxX;
-      } else {
-        position = maxX - ((t - halfCycle) / halfCycle) * maxX;
-      }
+      position = t < halfCycle ? (t / halfCycle) * maxX : maxX - ((t - halfCycle) / halfCycle) * maxX;
     } else if (oscillationCurve.value === "sinusoidal") {
-      position =
-        ((Math.sin(2 * Math.PI * (t / cycleDuration - 0.25)) + 1) / 2) * maxX;
+      position = ((Math.sin(2 * Math.PI * (t / cycleDuration - 0.25)) + 1) / 2) * maxX;
     }
     visualElement.style.left = position + "px";
 
-    // Update background gradient if enabled (only in visual modality)
+    // Update background gradient if enabled
     if (enableGradient.checked) {
       const centerX = position + elementWidth / 2;
       const ratio = centerX / containerWidth;
       visualContainer.style.background = `linear-gradient(90deg, ${leftBgColor.value} ${ratio * 100}%, ${rightBgColor.value} ${ratio * 100}%)`;
     }
 
-    // At endpoints, trigger stimuli (with threshold in ms)
+    // Trigger beep at endpoints (with a small threshold)
     const threshold = 30;
-    // Left endpoint
     if (t < threshold || cycleDuration - t < threshold) {
       if (!leftEndpointTriggered) {
         if (enableAuditory.checked) {
           playBeep(parseInt(frequencySlider.value, 10), 100);
-        }
-        if (enableVibration.checked && navigator.vibrate) {
-          navigator.vibrate(parseInt(vibrationDuration.value, 10));
         }
         leftEndpointTriggered = true;
       }
     } else {
       leftEndpointTriggered = false;
     }
-    // Right endpoint
     if (Math.abs(t - halfCycle) < threshold) {
       if (!rightEndpointTriggered) {
         if (enableAuditory.checked) {
           playBeep(parseInt(frequencySlider.value, 10), 100);
-        }
-        if (enableVibration.checked && navigator.vibrate) {
-          navigator.vibrate(parseInt(vibrationDuration.value, 10));
         }
         rightEndpointTriggered = true;
       }
@@ -174,7 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Audio beep function using Web Audio API
+  // Audio beep function using the Web Audio API
   function playBeep(frequency = 440, duration = 100) {
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
@@ -186,7 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => oscillator.stop(), duration);
   }
 
-  // Update session timer display
+  // Update the session timer display
   function updateTimer() {
     const remaining = sessionEndTime - Date.now();
     if (remaining <= 0) {
@@ -195,9 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       const minutes = Math.floor(remaining / 60000);
       const seconds = Math.floor((remaining % 60000) / 1000);
-      timerDisplay.textContent = `${minutes}:${
-        seconds < 10 ? "0" : ""
-      }${seconds}`;
+      timerDisplay.textContent = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
     }
   }
 
@@ -215,6 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Stop the session and clear timers
   function stopSession() {
     isAnimating = false;
     toggleButton.textContent = "Start Session";
@@ -222,21 +197,16 @@ document.addEventListener("DOMContentLoaded", () => {
     clearInterval(sessionIntervalId);
   }
 
+  // Toggle session start/stop
   toggleButton.addEventListener("click", () => {
-    if (isAnimating) {
-      stopSession();
-    } else {
-      startSession();
-    }
+    isAnimating ? stopSession() : startSession();
   });
 
-  // Fullscreen toggle
+  // Fullscreen toggle for the visual container
   fullscreenButton.addEventListener("click", () => {
     if (!document.fullscreenElement) {
       visualContainer.requestFullscreen().catch((err) => {
-        console.error(
-          `Error attempting to enable fullscreen mode: ${err.message} (${err.name})`
-        );
+        console.error(`Error attempting fullscreen: ${err.message}`);
       });
     } else {
       document.exitFullscreen();
