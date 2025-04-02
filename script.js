@@ -2,76 +2,179 @@ document.addEventListener("DOMContentLoaded", () => {
   // Audio context for beeps
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-  // Grab UI elements
-  const frequencySlider = document.getElementById("frequency");
-  const freqValueDisplay = document.getElementById("freqValue");
-  const oscillationSpeedSlider = document.getElementById("oscillationSpeed");
-  const speedValueDisplay = document.getElementById("speedValue");
-  const oscillationCurveSelect = document.getElementById("oscillationCurve");
-  const visualSelect = document.getElementById("visualSelect");
-  const customEmojiInput = document.getElementById("customEmoji");
-  const emojiSizeSlider = document.getElementById("emojiSize");
-  const emojiSizeValueDisplay = document.getElementById("emojiSizeValue");
-  const sessionDurationInput = document.getElementById("sessionDuration");
+  // Grab common UI elements
+  const visualContainer = document.getElementById("visualContainer");
+  const visualElement = document.getElementById("visualElement");
+  const toggleButton = document.getElementById("toggleButton");
+  const fullscreenButton = document.getElementById("fullscreenButton");
   const timerDisplay = document.getElementById("timerDisplay");
+
+  // Visual tab controls
+  const enableVisual = document.getElementById("enableVisual");
+  const visualMode = document.getElementById("visualMode");
+  const customEmoji = document.getElementById("customEmoji");
+  const emojiSize = document.getElementById("emojiSize");
+  const emojiSizeValue = document.getElementById("emojiSizeValue");
+  const oscillationSpeed = document.getElementById("oscillationSpeed");
+  const speedValueDisplay = document.getElementById("speedValue");
+  const oscillationCurve = document.getElementById("oscillationCurve");
   const enableGradient = document.getElementById("enableGradient");
   const gradientInputs = document.querySelector(".gradient-inputs");
   const leftBgColor = document.getElementById("leftBgColor");
   const rightBgColor = document.getElementById("rightBgColor");
-  const toggleButton = document.getElementById("toggleButton");
-  const fullscreenButton = document.getElementById("fullscreenButton");
-  const visualElement = document.getElementById("visualElement");
-  const visualContainer = document.getElementById("visualContainer");
 
-  // Display updates for inputs
+  // Auditory tab controls
+  const enableAuditory = document.getElementById("enableAuditory");
+  const frequencySlider = document.getElementById("frequency");
+  const freqValueDisplay = document.getElementById("freqValue");
+
+  // Tactile tab controls
+  const enableVibration = document.getElementById("enableVibration");
+  const vibrationDuration = document.getElementById("vibrationDuration");
+  const vibrationDurationValue = document.getElementById("vibrationDurationValue");
+
+  // Session duration control
+  const sessionDurationInput = document.getElementById("sessionDuration");
+
+  // Tab switching
+  const tabs = document.querySelectorAll(".tab");
+  const tabPanels = document.querySelectorAll(".tab-panel");
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      // Remove active from all tabs and panels
+      tabs.forEach((t) => t.classList.remove("active"));
+      tabPanels.forEach((panel) => panel.classList.remove("active"));
+
+      // Activate current tab and corresponding panel
+      tab.classList.add("active");
+      const panel = document.getElementById("tab-" + tab.dataset.tab);
+      if (panel) panel.classList.add("active");
+    });
+  });
+
+  // Update displays for sliders
+  emojiSize.addEventListener("input", () => {
+    emojiSizeValue.textContent = emojiSize.value + " px";
+    if (visualMode.value === "emoji") {
+      visualElement.style.fontSize = emojiSize.value + "px";
+    }
+  });
+  oscillationSpeed.addEventListener("input", () => {
+    speedValueDisplay.textContent = oscillationSpeed.value + " s";
+  });
   frequencySlider.addEventListener("input", () => {
     freqValueDisplay.textContent = frequencySlider.value + " Hz";
   });
-  oscillationSpeedSlider.addEventListener("input", () => {
-    speedValueDisplay.textContent = oscillationSpeedSlider.value + " s";
+  vibrationDuration.addEventListener("input", () => {
+    vibrationDurationValue.textContent = vibrationDuration.value + " ms";
   });
-  emojiSizeSlider.addEventListener("input", () => {
-    emojiSizeValueDisplay.textContent = emojiSizeSlider.value + " px";
-    if (visualSelect.value === "emoji") {
-      visualElement.style.fontSize = emojiSizeSlider.value + "px";
-    }
-  });
-  customEmojiInput.addEventListener("input", () => {
-    if (visualSelect.value === "emoji") {
-      visualElement.textContent = customEmojiInput.value;
-    }
-  });
-  // Toggle display of gradient color inputs when enabled
   enableGradient.addEventListener("change", () => {
     gradientInputs.style.display = enableGradient.checked ? "flex" : "none";
     if (!enableGradient.checked) {
-      // Reset to a default background when gradient is off
       visualContainer.style.background = "";
     }
   });
 
-  // Update visual element based on mode
-  function updateVisual(mode) {
+  // Update visual element based on visual mode
+  function updateVisual() {
     visualElement.style.backgroundColor = "transparent";
     visualElement.style.borderRadius = "0";
     visualElement.innerHTML = "";
-    if (mode === "emoji") {
-      visualElement.textContent = customEmojiInput.value;
-      visualElement.style.fontSize = emojiSizeSlider.value + "px";
-    } else if (mode === "shape") {
+    if (visualMode.value === "emoji") {
+      visualElement.textContent = customEmoji.value;
+      visualElement.style.fontSize = emojiSize.value + "px";
+    } else if (visualMode.value === "shape") {
       visualElement.style.backgroundColor = "#000";
       visualElement.style.borderRadius = "50%";
-    } else if (mode === "picture") {
+    } else if (visualMode.value === "picture") {
       visualElement.innerHTML =
         '<img src="https://via.placeholder.com/100" alt="oscillating image" />';
     }
   }
-  visualSelect.addEventListener("change", () => {
-    updateVisual(visualSelect.value);
-  });
-  updateVisual(visualSelect.value);
+  visualMode.addEventListener("change", updateVisual);
+  customEmoji.addEventListener("input", updateVisual);
+  updateVisual();
 
-  // Audio beep function
+  // Animation and session control variables
+  let isAnimating = false;
+  let animationFrameId;
+  let startTime = null;
+  let leftEndpointTriggered = false;
+  let rightEndpointTriggered = false;
+  let sessionIntervalId = null;
+  let sessionEndTime = null;
+
+  // Animation loop using requestAnimationFrame
+  function animate(timestamp) {
+    if (!startTime) startTime = timestamp;
+    const elapsed = timestamp - startTime;
+    const cycleDuration = parseFloat(oscillationSpeed.value) * 1000;
+    const halfCycle = cycleDuration / 2;
+    const t = elapsed % cycleDuration;
+
+    const containerWidth = visualContainer.clientWidth;
+    const elementWidth = visualElement.clientWidth;
+    const maxX = containerWidth - elementWidth;
+    let position = 0;
+
+    // Compute position based on selected curve
+    if (oscillationCurve.value === "linear") {
+      if (t < halfCycle) {
+        position = (t / halfCycle) * maxX;
+      } else {
+        position = maxX - ((t - halfCycle) / halfCycle) * maxX;
+      }
+    } else if (oscillationCurve.value === "sinusoidal") {
+      position =
+        ((Math.sin(2 * Math.PI * (t / cycleDuration - 0.25)) + 1) / 2) * maxX;
+    }
+    visualElement.style.left = position + "px";
+
+    // Update background gradient if enabled (only in visual modality)
+    if (enableGradient.checked) {
+      const centerX = position + elementWidth / 2;
+      const ratio = centerX / containerWidth;
+      visualContainer.style.background = `linear-gradient(90deg, ${leftBgColor.value} ${ratio * 100}%, ${rightBgColor.value} ${ratio * 100}%)`;
+    }
+
+    // At endpoints, trigger stimuli (with threshold in ms)
+    const threshold = 30;
+    // Left endpoint
+    if (t < threshold || cycleDuration - t < threshold) {
+      if (!leftEndpointTriggered) {
+        if (enableAuditory.checked) {
+          playBeep(parseInt(frequencySlider.value, 10), 100);
+        }
+        if (enableVibration.checked && navigator.vibrate) {
+          navigator.vibrate(parseInt(vibrationDuration.value, 10));
+        }
+        leftEndpointTriggered = true;
+      }
+    } else {
+      leftEndpointTriggered = false;
+    }
+    // Right endpoint
+    if (Math.abs(t - halfCycle) < threshold) {
+      if (!rightEndpointTriggered) {
+        if (enableAuditory.checked) {
+          playBeep(parseInt(frequencySlider.value, 10), 100);
+        }
+        if (enableVibration.checked && navigator.vibrate) {
+          navigator.vibrate(parseInt(vibrationDuration.value, 10));
+        }
+        rightEndpointTriggered = true;
+      }
+    } else {
+      rightEndpointTriggered = false;
+    }
+
+    if (isAnimating) {
+      animationFrameId = requestAnimationFrame(animate);
+    }
+  }
+
+  // Audio beep function using Web Audio API
   function playBeep(frequency = 440, duration = 100) {
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
@@ -83,91 +186,12 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => oscillator.stop(), duration);
   }
 
-  // Animation control variables
-  let isAnimating = false;
-  let animationFrameId;
-  let startTime = null;
-  let leftBeepTriggered = false;
-  let rightBeepTriggered = false;
-
-  // Session timer variables
-  let sessionIntervalId = null;
-  let sessionEndTime = null;
-
-  // Animation loop using requestAnimationFrame
-  function animate(timestamp) {
-    if (!startTime) startTime = timestamp;
-    const elapsed = timestamp - startTime;
-    const cycleDuration =
-      parseFloat(oscillationSpeedSlider.value) * 1000; // full cycle in ms
-    const halfCycle = cycleDuration / 2;
-    const t = elapsed % cycleDuration;
-
-    // Calculate max position (container width minus element width)
-    const containerWidth = visualContainer.clientWidth;
-    const elementWidth = visualElement.clientWidth;
-    const maxX = containerWidth - elementWidth;
-    let position = 0;
-
-    // Oscillation based on selected curve
-    if (oscillationCurveSelect.value === "linear") {
-      if (t < halfCycle) {
-        // Moving from left to right
-        position = (t / halfCycle) * maxX;
-      } else {
-        // Moving from right to left
-        position = maxX - ((t - halfCycle) / halfCycle) * maxX;
-      }
-    } else if (oscillationCurveSelect.value === "sinusoidal") {
-      // Sinusoidal oscillation: phase shift to start at left edge.
-      position =
-        ((Math.sin(2 * Math.PI * (t / cycleDuration - 0.25)) + 1) / 2) * maxX;
-    }
-    visualElement.style.left = position + "px";
-
-    // Update background gradient if enabled
-    if (enableGradient.checked) {
-      // Calculate element's center ratio relative to container width
-      const centerX = position + elementWidth / 2;
-      const ratio = centerX / containerWidth;
-      visualContainer.style.background = `linear-gradient(90deg, ${leftBgColor.value} ${ratio *
-        100}%, ${rightBgColor.value} ${ratio * 100}%)`;
-    }
-
-    // Threshold (ms) for endpoint detection
-    const threshold = 30;
-
-    // Left endpoint: near t=0 or near cycleDuration
-    if (t < threshold || cycleDuration - t < threshold) {
-      if (!leftBeepTriggered) {
-        playBeep(parseInt(frequencySlider.value, 10), 100);
-        leftBeepTriggered = true;
-      }
-    } else {
-      leftBeepTriggered = false;
-    }
-    // Right endpoint: near halfCycle
-    if (Math.abs(t - halfCycle) < threshold) {
-      if (!rightBeepTriggered) {
-        playBeep(parseInt(frequencySlider.value, 10), 100);
-        rightBeepTriggered = true;
-      }
-    } else {
-      rightBeepTriggered = false;
-    }
-
-    if (isAnimating) {
-      animationFrameId = requestAnimationFrame(animate);
-    }
-  }
-
   // Update session timer display
   function updateTimer() {
     const remaining = sessionEndTime - Date.now();
     if (remaining <= 0) {
       timerDisplay.textContent = "Session Complete";
-      stopOscillation();
-      clearInterval(sessionIntervalId);
+      stopSession();
     } else {
       const minutes = Math.floor(remaining / 60000);
       const seconds = Math.floor((remaining % 60000) / 1000);
@@ -177,13 +201,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Start oscillation and session timer
-  function startOscillation() {
+  // Start the oscillation session and timer
+  function startSession() {
     if (!isAnimating) {
       isAnimating = true;
       startTime = null;
       toggleButton.textContent = "Stop Session";
-      // Set up session timer based on user input (in minutes)
       const sessionDuration = parseFloat(sessionDurationInput.value);
       sessionEndTime = Date.now() + sessionDuration * 60 * 1000;
       timerDisplay.textContent = "";
@@ -192,23 +215,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function stopOscillation() {
+  function stopSession() {
     isAnimating = false;
     toggleButton.textContent = "Start Session";
     cancelAnimationFrame(animationFrameId);
     clearInterval(sessionIntervalId);
   }
 
-  // Toggle session start/stop
   toggleButton.addEventListener("click", () => {
     if (isAnimating) {
-      stopOscillation();
+      stopSession();
     } else {
-      startOscillation();
+      startSession();
     }
   });
 
-  // Fullscreen toggle for visual container
+  // Fullscreen toggle
   fullscreenButton.addEventListener("click", () => {
     if (!document.fullscreenElement) {
       visualContainer.requestFullscreen().catch((err) => {
