@@ -14,8 +14,17 @@
 
     <!-- Configuration Panel -->
     <div class="container">
-      <h1>EMDR Oscillation Experience</h1>
-      
+      <h1>Eye Movement</h1>
+            <!-- Session Timer and Controls -->
+      <div class="setting-item">
+        <label for="sessionDuration">Session Duration (minutes):</label>
+        <input type="number" id="sessionDuration" min="1" max="60" value="5" />
+        <span id="timerDisplay"></span>
+      </div>
+      <div class="button-group">
+        <button id="toggleButton">Start Session</button>
+        <button id="fullscreenButton">Toggle Fullscreen</button>
+      </div>
       <!-- Tab Bar -->
       <div class="tab-bar">
         <button class="tab active" data-tab="visual">Visual</button>
@@ -89,16 +98,7 @@
         </div>
       </div>
 
-      <!-- Session Timer and Controls -->
-      <div class="setting-item">
-        <label for="sessionDuration">Session Duration (minutes):</label>
-        <input type="number" id="sessionDuration" min="1" max="60" value="5" />
-        <span id="timerDisplay"></span>
-      </div>
-      <div class="button-group">
-        <button id="toggleButton">Start Session</button>
-        <button id="fullscreenButton">Toggle Fullscreen</button>
-      </div>
+
     </div>
     <script src="script.js"></script>
   </body>
