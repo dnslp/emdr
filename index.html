@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>EMDR Bilateral Stimulation</title>
+    <title>EMDR Oscillation Experience</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -14,12 +14,11 @@
 
     <!-- Configuration panel -->
     <div class="container">
-      <h1>EMDR Bilateral Stimulation</h1>
+      <h1>EMDR Oscillation Experience</h1>
       <!-- Tab Bar -->
       <div class="tab-bar">
         <button class="tab active" data-tab="visual">Visual</button>
         <button class="tab" data-tab="auditory">Auditory</button>
-        <button class="tab" data-tab="tactile">Tactile</button>
       </div>
 
       <!-- Tab Panels -->
@@ -51,14 +50,7 @@
           </div>
           <div class="setting-item">
             <label for="oscillationSpeed">Oscillation Speed (Full Cycle in s):</label>
-            <input
-              type="range"
-              id="oscillationSpeed"
-              min="1"
-              max="5"
-              step="0.1"
-              value="2"
-            />
+            <input type="range" id="oscillationSpeed" min="1" max="5" step="0.1" value="2" />
             <span id="speedValue">2 s</span>
           </div>
           <div class="setting-item">
@@ -92,21 +84,6 @@
             <label for="frequency">Beep Frequency (Hz):</label>
             <input type="range" id="frequency" min="40" max="1000" value="440" />
             <span id="freqValue">440 Hz</span>
-          </div>
-        </div>
-
-        <!-- Tactile Configuration -->
-        <div id="tab-tactile" class="tab-panel">
-          <div class="setting-item">
-            <label>
-              <input type="checkbox" id="enableVibration" checked />
-              Enable Tactile (Vibration)
-            </label>
-          </div>
-          <div class="setting-item">
-            <label for="vibrationDuration">Vibration Duration (ms):</label>
-            <input type="range" id="vibrationDuration" min="50" max="500" value="100" />
-            <span id="vibrationDurationValue">100 ms</span>
           </div>
         </div>
       </div>
