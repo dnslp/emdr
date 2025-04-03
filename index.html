@@ -14,17 +14,12 @@
 
     <!-- Configuration Panel -->
     <div class="container">
-      <h1>Eye Movement</h1>
-            <!-- Session Timer and Controls -->
-      <div class="setting-item">
-        <label for="sessionDuration">Session Duration (minutes):</label>
-        <input type="number" id="sessionDuration" min="1" max="60" value="5" />
-        <span id="timerDisplay"></span>
-      </div>
-      <div class="button-group">
+      <h1>EMDR Oscillation Experience</h1>
+            <div class="button-group">
         <button id="toggleButton">Start Session</button>
         <button id="fullscreenButton">Toggle Fullscreen</button>
       </div>
+    </div>
       <!-- Tab Bar -->
       <div class="tab-bar">
         <button class="tab active" data-tab="visual">Visual</button>
@@ -44,23 +39,38 @@
           <div class="setting-item">
             <label for="visualMode">Visual Mode:</label>
             <select id="visualMode">
-              <option value="emoji">Emoji</option>
+              <option value="emoji">Emoji / Text</option>
               <option value="shape">Shape</option>
               <option value="picture">Picture</option>
             </select>
           </div>
           <div class="setting-item">
-            <label for="customEmoji">Custom Emoji (for Emoji mode):</label>
+            <label for="customEmoji">Emoji or Text:</label>
             <input type="text" id="customEmoji" value="😊" />
           </div>
           <div class="setting-item">
-            <label for="emojiSize">Emoji Size (px):</label>
+            <label for="emojiSize">Size (px):</label>
             <input type="range" id="emojiSize" min="20" max="200" value="100" />
             <span id="emojiSizeValue">100 px</span>
           </div>
+          <!-- New TTS and Font options -->
+          <div class="setting-item inline">
+            <label>
+              <input type="checkbox" id="enableTTS" />
+              Enable Text-to-Speech
+            </label>
+            <label for="textFont">Font:</label>
+            <select id="textFont">
+              <option value="'Segoe UI', sans-serif">Segoe UI</option>
+              <option value="Arial, sans-serif">Arial</option>
+              <option value="'Times New Roman', serif">Times New Roman</option>
+              <option value="'Courier New', monospace">Courier New</option>
+            </select>
+          </div>
           <div class="setting-item">
             <label for="oscillationSpeed">Oscillation Speed (Full Cycle in s):</label>
-            <input type="range" id="oscillationSpeed" min="1" max="5" step="0.1" value="2" />
+            <!-- Updated range: 0.5 to 10 seconds -->
+            <input type="range" id="oscillationSpeed" min="0.5" max="10" step="0.1" value="2" />
             <span id="speedValue">2 s</span>
           </div>
           <div class="setting-item">
@@ -80,6 +90,15 @@
             <label for="rightBgColor">Right Background Color:</label>
             <input type="color" id="rightBgColor" value="#eaeaea" />
           </div>
+          <!-- Preset images container for picture mode -->
+          <div class="setting-item" id="presetImages" style="display: none;">
+            <label>Choose an Image:</label>
+            <div>
+              <img src="https://www.bluey.tv/wp-content/uploads/2023/07/Bluey.png" alt="Bluey" />
+              <img src="https://upload.wikimedia.org/wikipedia/en/4/49/Creeper_%28Minecraft%29.png" alt="Creeper" />
+              <img src="https://static.wikia.nocookie.net/great-characters/images/a/a7/SXSG_Sonic.png" alt="Sonic" />
+            </div>
+          </div>
         </div>
 
         <!-- Auditory Configuration -->
@@ -98,8 +117,13 @@
         </div>
       </div>
 
+      <!-- Session Timer and Controls -->
+      <div class="setting-item">
+        <label for="sessionDuration">Session Duration (minutes):</label>
+        <input type="number" id="sessionDuration" min="1" max="60" value="5" />
+        <span id="timerDisplay"></span>
+      </div>
 
-    </div>
     <script src="script.js"></script>
   </body>
 </html>
