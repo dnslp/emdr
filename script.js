@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Create an AudioContext for generating beeps
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-  // Grab elements
+  // Grab common elements
   const visualContainer = document.getElementById("visualContainer");
   const visualElement = document.getElementById("visualElement");
   const toggleButton = document.getElementById("toggleButton");
@@ -15,13 +15,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const customEmoji = document.getElementById("customEmoji");
   const emojiSize = document.getElementById("emojiSize");
   const emojiSizeValue = document.getElementById("emojiSizeValue");
-  const oscillationSpeed = document.getElementById("oscillationSpeed");
+  const oscillationSpeed = document.getElementById("oscillationSpeed"); // expect range 0.5 - 10
   const speedValueDisplay = document.getElementById("speedValue");
   const oscillationCurve = document.getElementById("oscillationCurve");
   const enableGradient = document.getElementById("enableGradient");
   const gradientInputs = document.querySelector(".gradient-inputs");
   const leftBgColor = document.getElementById("leftBgColor");
   const rightBgColor = document.getElementById("rightBgColor");
+
+  // New Visual enhancements: Text-to-Speech and Font selection
+  const enableTTS = document.getElementById("enableTTS");
+  const textFont = document.getElementById("textFont");
+
+  // Preset image options (for picture mode)
+  const presetImages = document.getElementById("presetImages");
+  let selectedImage = "";
 
   // Auditory controls
   const enableAuditory = document.getElementById("enableAuditory");
@@ -64,26 +72,59 @@ document.addEventListener("DOMContentLoaded", () => {
       visualContainer.style.background = "";
     }
   });
+  textFont.addEventListener("change", () => {
+    if (visualMode.value === "emoji") {
+      visualElement.style.fontFamily = textFont.value;
+    }
+  });
 
   // Update the visual element based on the chosen mode
   function updateVisual() {
     visualElement.style.backgroundColor = "transparent";
     visualElement.style.borderRadius = "0";
     visualElement.innerHTML = "";
+    // Hide preset images container by default
+    if (presetImages) {
+      presetImages.style.display = "none";
+    }
     if (visualMode.value === "emoji") {
       visualElement.textContent = customEmoji.value;
       visualElement.style.fontSize = emojiSize.value + "px";
+      if (enableTTS.checked) {
+        visualElement.style.fontFamily = textFont.value;
+      }
     } else if (visualMode.value === "shape") {
       visualElement.style.backgroundColor = "#000";
       visualElement.style.borderRadius = "50%";
     } else if (visualMode.value === "picture") {
-      visualElement.innerHTML =
-        '<img src="https://www.bluey.tv/wp-content/uploads/2023/07/Bluey.png" alt="oscillating image" width="40" />';
+      // Show preset images container for picture mode
+      if (presetImages) {
+        presetImages.style.display = "flex";
+      }
+      if (selectedImage) {
+        visualElement.innerHTML = `<img src="${selectedImage}" alt="preset image" style="width:50px;">`;
+      } else {
+        visualElement.innerHTML = '<img src="https://via.placeholder.com/50" alt="oscillating image">';
+      }
     }
   }
   visualMode.addEventListener("change", updateVisual);
   customEmoji.addEventListener("input", updateVisual);
   updateVisual();
+
+  // Add event listeners to preset images if available
+  if (presetImages) {
+    const imgs = presetImages.querySelectorAll("img");
+    imgs.forEach((img) => {
+      img.addEventListener("click", () => {
+        selectedImage = img.src;
+        updateVisual();
+        // Highlight the selected image
+        imgs.forEach((im) => im.classList.remove("selected"));
+        img.classList.add("selected");
+      });
+    });
+  }
 
   // Animation and session variables
   let isAnimating = false;
@@ -107,7 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const maxX = containerWidth - elementWidth;
     let position = 0;
 
-    // Compute the current position using the selected oscillation curve
+    // Compute position based on selected oscillation curve
     if (oscillationCurve.value === "linear") {
       position = t < halfCycle ? (t / halfCycle) * maxX : maxX - ((t - halfCycle) / halfCycle) * maxX;
     } else if (oscillationCurve.value === "sinusoidal") {
@@ -124,20 +165,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Trigger beep at endpoints (with a small threshold)
     const threshold = 30;
+    // Left endpoint trigger
     if (t < threshold || cycleDuration - t < threshold) {
       if (!leftEndpointTriggered) {
         if (enableAuditory.checked) {
-          playBeep(parseInt(frequencySlider.value, 10), 100);
+          playBeep(parseInt(frequencySlider.value, 10), 100, -1);
+        }
+        // If TTS is enabled and the text field is not empty, speak the text (trigger only at left endpoint)
+        if (enableTTS.checked && customEmoji.value.trim() !== "" && !speechSynthesis.speaking) {
+          const utterance = new SpeechSynthesisUtterance(customEmoji.value);
+          speechSynthesis.speak(utterance);
         }
         leftEndpointTriggered = true;
       }
     } else {
       leftEndpointTriggered = false;
     }
+    // Right endpoint trigger
     if (Math.abs(t - halfCycle) < threshold) {
       if (!rightEndpointTriggered) {
         if (enableAuditory.checked) {
-          playBeep(parseInt(frequencySlider.value, 10), 100);
+          playBeep(parseInt(frequencySlider.value, 10), 100, 1);
         }
         rightEndpointTriggered = true;
       }
@@ -150,19 +198,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Audio beep function using the Web Audio API
-  function playBeep(frequency = 440, duration = 100) {
+  // Audio beep function using Web Audio API with stereo panning and tapered decay
+  function playBeep(frequency = 440, duration = 100, pan = 0) {
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
+    const panner = audioCtx.createStereoPanner();
     oscillator.type = "sine";
     oscillator.frequency.value = frequency;
+    gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+    // Taper the decay
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration / 1000);
     oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
+    gainNode.connect(panner);
+    panner.pan.value = pan;
+    panner.connect(audioCtx.destination);
     oscillator.start();
-    setTimeout(() => oscillator.stop(), duration);
+    oscillator.stop(audioCtx.currentTime + duration / 1000);
   }
 
-  // Update the session timer display
+  // Update session timer display
   function updateTimer() {
     const remaining = sessionEndTime - Date.now();
     if (remaining <= 0) {
