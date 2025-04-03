@@ -5,11 +5,12 @@
   box-sizing: border-box;
 }
 
-/* Body styling for a clean, minimal look */
+/* Body styling for a clean, modern look */
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #eaeaea;
+  background-color: #f7f7f7;
   color: #333;
+  padding: 1rem;
 }
 
 /* Visual container spans full width */
@@ -18,6 +19,8 @@ body {
   height: 200px;
   position: relative;
   overflow: hidden;
+  background-color: #ddd;
+  margin-bottom: 1rem;
 }
 
 /* Oscillating visual element styling */
@@ -35,13 +38,18 @@ body {
 
 /* Main container for controls */
 .container {
-  max-width: 500px;
-  margin: 2rem auto;
+  max-width: 600px;
+  margin: 0 auto;
   padding: 1.5rem;
   background-color: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Header */
+.container h1 {
   text-align: center;
+  margin-bottom: 1rem;
 }
 
 /* Tab Bar styling */
@@ -55,16 +63,17 @@ body {
 .tab {
   flex: 1;
   padding: 0.75rem;
-  background-color: #f0f0f0;
+  background-color: #e0e0e0;
   border: none;
   cursor: pointer;
   font-weight: bold;
+  border-radius: 6px;
   transition: background-color 0.2s ease;
 }
 
 .tab.active,
 .tab:hover {
-  background-color: #d0d0d0;
+  background-color: #c0c0c0;
 }
 
 /* Tab panel styling */
@@ -75,7 +84,6 @@ body {
 .tab-panel {
   display: none;
   flex-direction: column;
-  align-items: center;
   gap: 1rem;
   text-align: left;
 }
@@ -89,7 +97,6 @@ body {
   margin-bottom: 1rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
 
 .setting-item label {
@@ -108,12 +115,47 @@ body {
   border: 1px solid #ccc;
 }
 
+/* New setting for TTS and font selection */
+.setting-item.inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Preset images container (for picture mode) */
+#presetImages {
+  display: none;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+#presetImages img {
+  width: 50px;
+  height: auto;
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+#presetImages img:hover {
+  transform: scale(1.1);
+}
+
+#presetImages img.selected {
+  border-color: #007aff;
+}
+
+/* Gradient inputs styling */
 .gradient-inputs {
+  display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-/* Button styling */
+/* Button group styling */
 .button-group {
   display: flex;
   justify-content: center;
@@ -133,4 +175,9 @@ button {
 
 button:hover {
   background-color: #005bb5;
+}
+
+/* Fullscreen button margin */
+#fullscreenButton {
+  margin-top: 1rem;
 }
