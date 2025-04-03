@@ -72,11 +72,13 @@ document.addEventListener("DOMContentLoaded", () => {
       visualContainer.style.background = "";
     }
   });
-  textFont.addEventListener("change", () => {
-    if (visualMode.value === "emoji") {
-      visualElement.style.fontFamily = textFont.value;
-    }
-  });
+  if (textFont) {
+    textFont.addEventListener("change", () => {
+      if (visualMode.value === "emoji") {
+        visualElement.style.fontFamily = textFont.value;
+      }
+    });
+  }
 
   // Update the visual element based on the chosen mode
   function updateVisual() {
@@ -90,7 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (visualMode.value === "emoji") {
       visualElement.textContent = customEmoji.value;
       visualElement.style.fontSize = emojiSize.value + "px";
-      if (enableTTS.checked) {
+      if (enableTTS && enableTTS.checked && textFont) {
         visualElement.style.fontFamily = textFont.value;
       }
     } else if (visualMode.value === "shape") {
@@ -148,7 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const maxX = containerWidth - elementWidth;
     let position = 0;
 
-    // Compute position based on selected oscillation curve
+    // Compute the current position using the selected oscillation curve
     if (oscillationCurve.value === "linear") {
       position = t < halfCycle ? (t / halfCycle) * maxX : maxX - ((t - halfCycle) / halfCycle) * maxX;
     } else if (oscillationCurve.value === "sinusoidal") {
@@ -165,14 +167,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Trigger beep at endpoints (with a small threshold)
     const threshold = 30;
-    // Left endpoint trigger
     if (t < threshold || cycleDuration - t < threshold) {
       if (!leftEndpointTriggered) {
         if (enableAuditory.checked) {
+          // Pan to left (-1) when at left endpoint
           playBeep(parseInt(frequencySlider.value, 10), 100, -1);
         }
-        // If TTS is enabled and the text field is not empty, speak the text (trigger only at left endpoint)
-        if (enableTTS.checked && customEmoji.value.trim() !== "" && !speechSynthesis.speaking) {
+        // Trigger TTS if enabled and text is provided (only at left endpoint)
+        if (enableTTS && enableTTS.checked && customEmoji.value.trim() !== "" && !speechSynthesis.speaking) {
           const utterance = new SpeechSynthesisUtterance(customEmoji.value);
           speechSynthesis.speak(utterance);
         }
@@ -181,10 +183,10 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       leftEndpointTriggered = false;
     }
-    // Right endpoint trigger
     if (Math.abs(t - halfCycle) < threshold) {
       if (!rightEndpointTriggered) {
         if (enableAuditory.checked) {
+          // Pan to right (1) when at right endpoint
           playBeep(parseInt(frequencySlider.value, 10), 100, 1);
         }
         rightEndpointTriggered = true;
@@ -206,7 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
     oscillator.type = "sine";
     oscillator.frequency.value = frequency;
     gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
-    // Taper the decay
+    // Taper the decay exponentially for a smoother fade-out
     gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration / 1000);
     oscillator.connect(gainNode);
     gainNode.connect(panner);
@@ -216,7 +218,7 @@ document.addEventListener("DOMContentLoaded", () => {
     oscillator.stop(audioCtx.currentTime + duration / 1000);
   }
 
-  // Update session timer display
+  // Update the session timer display
   function updateTimer() {
     const remaining = sessionEndTime - Date.now();
     if (remaining <= 0) {
