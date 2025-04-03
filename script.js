@@ -53,11 +53,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Update slider displays
+  // Update slider display and adjust size for all modes
   emojiSize.addEventListener("input", () => {
-    emojiSizeValue.textContent = emojiSize.value + " px";
+    const newSize = emojiSize.value + " px";
+    emojiSizeValue.textContent = newSize;
     if (visualMode.value === "emoji") {
-      visualElement.style.fontSize = emojiSize.value + "px";
+      // For emoji/text mode, adjust font size
+      visualElement.style.fontSize = newSize;
+    } else {
+      // For shape and picture modes, adjust the element's width and height
+      visualElement.style.width = newSize;
+      visualElement.style.height = newSize;
+      if (visualMode.value === "picture") {
+        const img = visualElement.querySelector("img");
+        if (img) {
+          img.style.width = newSize;
+        }
+      }
     }
   });
   oscillationSpeed.addEventListener("input", () => {
@@ -82,6 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Update the visual element based on the chosen mode
   function updateVisual() {
+    // Reset element styling
     visualElement.style.backgroundColor = "transparent";
     visualElement.style.borderRadius = "0";
     visualElement.innerHTML = "";
@@ -89,24 +102,33 @@ document.addEventListener("DOMContentLoaded", () => {
     if (presetImages) {
       presetImages.style.display = "none";
     }
+    const sizeVal = emojiSize.value + "px";
     if (visualMode.value === "emoji") {
       visualElement.textContent = customEmoji.value;
-      visualElement.style.fontSize = emojiSize.value + "px";
+      visualElement.style.fontSize = sizeVal;
+      // Apply font if TTS is enabled and a font is selected
       if (enableTTS && enableTTS.checked && textFont) {
         visualElement.style.fontFamily = textFont.value;
       }
+      // Optionally, you can set width/height if needed:
+      visualElement.style.width = sizeVal;
+      visualElement.style.height = sizeVal;
     } else if (visualMode.value === "shape") {
       visualElement.style.backgroundColor = "#000";
       visualElement.style.borderRadius = "50%";
+      visualElement.style.width = sizeVal;
+      visualElement.style.height = sizeVal;
     } else if (visualMode.value === "picture") {
       // Show preset images container for picture mode
       if (presetImages) {
         presetImages.style.display = "flex";
       }
+      visualElement.style.width = sizeVal;
+      visualElement.style.height = sizeVal;
       if (selectedImage) {
-        visualElement.innerHTML = `<img src="${selectedImage}" alt="preset image" style="width:50px;">`;
+        visualElement.innerHTML = `<img src="${selectedImage}" alt="preset image" style="width:${sizeVal};">`;
       } else {
-        visualElement.innerHTML = '<img src="https://via.placeholder.com/50" alt="oscillating image">';
+        visualElement.innerHTML = `<img src="https://via.placeholder.com/50" alt="oscillating image" style="width:${sizeVal};">`;
       }
     }
   }
